@@ -22,6 +22,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -99,6 +100,10 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.ResponseExtractor;
 import org.springframework.web.client.RestTemplate;
+
+import com.google.protobuf.ByteString;
+import com.google.protobuf.CodedInputStream;
+import com.google.protobuf.InvalidProtocolBufferException;
 
 /**
  * Abstract implementation of the CloudControllerClient intended to serve as the base.
@@ -224,16 +229,66 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 
 	@Override
 	public List<ApplicationLog> getRecentLogs(String appName) {
-		AccumulatingApplicationLogListener listener = new AccumulatingApplicationLogListener();
-		streamLoggregatorLogs(appName, listener, true);
-		synchronized (listener) {
-			try {
-				listener.wait();
-			} catch (InterruptedException e) {
-				// return any captured logs
+		String endPoint = getInfo().getLoggregatorEndpoint();
+
+		URI uri = null;
+		try {
+			uri = new URI(endPoint);
+			List<ApplicationLog> logs = new ArrayList<ApplicationLog>();
+			String scheme = uri.getScheme();
+			String host = uri.getHost();
+			UUID appId = getAppId(appName);
+
+			if ("ws".equals(scheme) || "wss".equals(scheme)) {
+				scheme = "http";
 			}
+
+			StringBuilder builder = new StringBuilder();
+			builder.append(scheme);
+			builder.append("://");
+			builder.append(host);
+			builder.append("/recent");
+			builder.append('?');
+			builder.append("app");
+			builder.append('=');
+			builder.append(appId.toString());
+
+			String rawLogs = getRestTemplate().getForObject(builder.toString(),
+					String.class);
+
+			if (rawLogs != null) {
+
+				try {
+					CodedInputStream stream = CodedInputStream
+							.newInstance(rawLogs.getBytes());
+					while (!stream.isAtEnd()) {
+						ByteString btString = stream.readBytes();
+					
+						LogMessages.Message message = LogMessages.Message
+								.parseFrom(btString.toStringUtf8().getBytes());
+						ApplicationLog.MessageType messageType = message
+								.getMessageType() == LogMessages.Message.MessageType.OUT ? ApplicationLog.MessageType.STDOUT
+								: ApplicationLog.MessageType.STDERR;
+						ApplicationLog log = new ApplicationLog(
+								message.getAppId(), message.getMessage()
+										.toStringUtf8(), new Date(
+										message.getTimestamp()), messageType,
+								message.getSourceName(), message.getSourceId());
+						logs.add(log);
+					}
+					
+
+				} catch (InvalidProtocolBufferException e) {
+					throw new RuntimeException(e);
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+			}
+			return logs;
+		} catch (URISyntaxException e) {
+			throw new RuntimeException("Invalid loggregator endpoint: "
+					+ endPoint, e);
 		}
-		return listener.getLogs();
 	}
 
 	@Override
