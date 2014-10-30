@@ -16,22 +16,28 @@
 
 package org.cloudfoundry.client.lib.rest;
 
+import java.io.IOException;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
+
 import org.cloudfoundry.client.lib.RestLogCallback;
 import org.cloudfoundry.client.lib.RestLogEntry;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RequestCallback;
 import org.springframework.web.client.ResponseExtractor;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-
-import java.io.IOException;
-import java.net.URI;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * RestTemplate that provides for logging of any REST calls made
@@ -41,6 +47,25 @@ import java.util.Set;
 public class LoggingRestTemplate extends RestTemplate {
 
 	private Set<RestLogCallback> listeners = new LinkedHashSet<RestLogCallback>();
+
+	private String messageBoundary;
+
+	
+	public List<String> getRecentLogs(String url) throws RestClientException {
+		String rawMessage = getForObject(url, String.class);
+		String[] subs = rawMessage.split("--"+messageBoundary);
+		
+		List<String> logs = new ArrayList<String>();
+		
+		for (String sb : subs) {
+			String actualMessage = sb.trim();
+			if (actualMessage.length() > 0) {
+				logs.add(actualMessage);
+			}
+		}
+		
+		return logs;
+	}
 
 	@Override
 	protected <T> T doExecute(URI url, HttpMethod method, RequestCallback requestCallback, final ResponseExtractor<T> responseExtractor) throws RestClientException {
@@ -66,6 +91,20 @@ public class LoggingRestTemplate extends RestTemplate {
 								} else {
 									message[0] = data.getClass().getName();
 								}
+								
+								// TEMP: for loggregator response only
+								HttpHeaders headers = response.getHeaders();
+								if (headers != null) {
+									MediaType mediaType = headers.getContentType();
+									Map<String, String> parameters = mediaType.getParameters();
+									String type = mediaType.getType();
+									String subType = mediaType.getSubtype();
+									if ("multipart".equals(type) && "x-protobuf".equals(subType)) {
+										messageBoundary = parameters.get("boundary");
+
+									}	
+								}
+		
 								return data;
 							}
 							else {
@@ -106,5 +145,8 @@ public class LoggingRestTemplate extends RestTemplate {
 	void unRegisterRestLogListener(RestLogCallback callBack) {
 		listeners.remove(callBack);
 	}
+	
+
+
 
 }

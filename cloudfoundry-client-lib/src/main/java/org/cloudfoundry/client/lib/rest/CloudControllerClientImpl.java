@@ -18,6 +18,8 @@ package org.cloudfoundry.client.lib.rest;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.net.SocketException;
@@ -38,6 +40,7 @@ import java.util.zip.ZipFile;
 
 import javax.websocket.ClientEndpointConfig;
 
+import loggregator.LogMessages;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.cloudfoundry.client.lib.ApplicationLogListener;
@@ -101,9 +104,8 @@ import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.ResponseExtractor;
 import org.springframework.web.client.RestTemplate;
 
-import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedInputStream;
-import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.TextFormat;
 
 /**
  * Abstract implementation of the CloudControllerClient intended to serve as the base.
@@ -253,37 +255,40 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 			builder.append('=');
 			builder.append(appId.toString());
 
-			String rawLogs = getRestTemplate().getForObject(builder.toString(),
-					String.class);
+			if (getRestTemplate() instanceof LoggingRestTemplate) {
+				List<String> rawLogs = ((LoggingRestTemplate) getRestTemplate())
+						.getRecentLogs(builder.toString());
+				if (rawLogs != null) {
+					for (String rawLog : rawLogs) {
 
-			if (rawLogs != null) {
+						try {
 
-				try {
-					CodedInputStream stream = CodedInputStream
-							.newInstance(rawLogs.getBytes());
-					while (!stream.isAtEnd()) {
-						ByteString btString = stream.readBytes();
-					
-						LogMessages.Message message = LogMessages.Message
-								.parseFrom(btString.toStringUtf8().getBytes());
-						ApplicationLog.MessageType messageType = message
-								.getMessageType() == LogMessages.Message.MessageType.OUT ? ApplicationLog.MessageType.STDOUT
-								: ApplicationLog.MessageType.STDERR;
-						ApplicationLog log = new ApplicationLog(
-								message.getAppId(), message.getMessage()
-										.toStringUtf8(), new Date(
-										message.getTimestamp()), messageType,
-								message.getSourceName(), message.getSourceId());
-						logs.add(log);
+							Reader reader = new StringReader(rawLog);
+
+							LogMessages.Message.Builder logMsgBuiler = LogMessages.Message
+									.newBuilder();
+							TextFormat.merge(reader, logMsgBuiler);
+
+							LogMessages.Message message = logMsgBuiler.build();
+
+							ApplicationLog.MessageType messageType = message
+									.getMessageType() == LogMessages.Message.MessageType.OUT ? ApplicationLog.MessageType.STDOUT
+									: ApplicationLog.MessageType.STDERR;
+							ApplicationLog log = new ApplicationLog(
+									message.getAppId(), message.getMessage()
+											.toStringUtf8(), new Date(
+											message.getTimestamp()),
+									messageType, message.getSourceName(),
+									message.getSourceId());
+							logs.add(log);
+						} catch (Exception e) {
+							// throw new RuntimeException(e);
+							System.out.println(e.getMessage());
+						}
 					}
-					
-
-				} catch (InvalidProtocolBufferException e) {
-					throw new RuntimeException(e);
-				} catch (IOException e) {
-					throw new RuntimeException(e);
 				}
 			}
+		
 			return logs;
 		} catch (URISyntaxException e) {
 			throw new RuntimeException("Invalid loggregator endpoint: "
