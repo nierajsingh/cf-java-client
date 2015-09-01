@@ -295,6 +295,10 @@ public interface CloudFoundryOperations {
 	 * @return list of cloud applications
 	 */
 	List<CloudApplication> getApplications();
+	
+	List<CloudApplication> getApplicationsWithBasicInfo();
+	
+	Map<CloudApplication, ApplicationStats>  getApplicationStats(List<CloudApplication> apps);
 
 	/**
 	 * Get cloud application with the specified name.
@@ -319,6 +323,8 @@ public interface CloudFoundryOperations {
 	 * @return the cloud application stats
 	 */
 	ApplicationStats getApplicationStats(String appName);
+	
+	ApplicationStats getApplicationStats(CloudApplication application);
 
 	/**
 	 * Get application environment variables for the app with the specified name.

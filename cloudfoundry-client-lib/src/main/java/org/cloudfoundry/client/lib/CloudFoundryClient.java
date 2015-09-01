@@ -221,6 +221,14 @@ public class CloudFoundryClient implements CloudFoundryOperations {
 	public List<CloudApplication> getApplications() {
 		return cc.getApplications();
 	}
+	
+	public List<CloudApplication> getApplicationsWithBasicInfo() {
+		return cc.getApplicationsWithBasicInfo();
+	}
+	
+	public Map<CloudApplication, ApplicationStats> getApplicationStats(List<CloudApplication> apps) {
+		return cc.getApplicationStats(apps);
+	}
 
 	public CloudApplication getApplication(String appName) {
 		return cc.getApplication(appName);
@@ -240,6 +248,10 @@ public class CloudFoundryClient implements CloudFoundryOperations {
 
 	public ApplicationStats getApplicationStats(String appName) {
 		return cc.getApplicationStats(appName);
+	}
+	
+	public ApplicationStats getApplicationStats(CloudApplication application) {
+		return cc.getApplicationStats(application);
 	}
 
 	public void createApplication(String appName, Staging staging, Integer memory, List<String> uris,

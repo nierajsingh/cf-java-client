@@ -121,12 +121,18 @@ public interface CloudControllerClient {
     // App methods
 
 	List<CloudApplication> getApplications();
+	
+	List<CloudApplication> getApplicationsWithBasicInfo();
+	
+	Map<CloudApplication, ApplicationStats>  getApplicationStats(List<CloudApplication> apps);
 
 	CloudApplication getApplication(String appName);
 
 	CloudApplication getApplication(UUID appGuid);
 
 	ApplicationStats getApplicationStats(String appName);
+	
+	ApplicationStats getApplicationStats(CloudApplication application);
 
 	Map<String, Object> getApplicationEnvironment(UUID appGuid);
 

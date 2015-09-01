@@ -75,6 +75,7 @@ import org.cloudfoundry.client.lib.domain.CloudServiceOffering;
 import org.cloudfoundry.client.lib.domain.CloudServicePlan;
 import org.cloudfoundry.client.lib.domain.CloudSpace;
 import org.cloudfoundry.client.lib.domain.CloudStack;
+import org.cloudfoundry.client.lib.domain.CloudUser;
 import org.cloudfoundry.client.lib.domain.CrashInfo;
 import org.cloudfoundry.client.lib.domain.CrashesInfo;
 import org.cloudfoundry.client.lib.domain.InstanceState;
@@ -83,7 +84,6 @@ import org.cloudfoundry.client.lib.domain.InstancesInfo;
 import org.cloudfoundry.client.lib.domain.SecurityGroupRule;
 import org.cloudfoundry.client.lib.domain.Staging;
 import org.cloudfoundry.client.lib.domain.UploadApplicationPayload;
-import org.cloudfoundry.client.lib.domain.CloudUser;
 import org.cloudfoundry.client.lib.oauth2.OauthClient;
 import org.cloudfoundry.client.lib.util.CloudEntityResourceMapper;
 import org.cloudfoundry.client.lib.util.CloudUtil;
@@ -1065,6 +1065,38 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 		}
 		return apps;
 	}
+	
+	public List<CloudApplication> getApplicationsWithBasicInfo() {
+		Map<String, Object> urlVars = new HashMap<String, Object>();
+		String urlPath = "/v2";
+		if (sessionSpace != null) {
+			urlVars.put("space", sessionSpace.getMeta().getGuid());
+			urlPath = urlPath + "/spaces/{space}";
+		}
+		urlPath = urlPath + "/apps?inline-relations-depth=1";
+		List<Map<String, Object>> resourceList = getAllResources(urlPath, urlVars);
+		List<CloudApplication> apps = new ArrayList<CloudApplication>();
+		for (Map<String, Object> resource : resourceList) {
+			CloudApplication app = getCloudApplication(resource);
+			if (app != null) {
+				apps.add(app);
+			}
+		}
+		return apps;
+	}
+	
+	public Map<CloudApplication, ApplicationStats> getApplicationStats(List<CloudApplication> apps) {
+		Map<CloudApplication, ApplicationStats> appsWithStats = new HashMap<CloudApplication, ApplicationStats>();
+		for (CloudApplication existingApp : apps) {
+			UUID appId = existingApp.getMeta().getGuid();
+			existingApp.setUris(findApplicationUris(appId));
+
+			ApplicationStats stats = doGetApplicationStats(appId, existingApp.getState());
+			existingApp.setRunningInstances(getRunningInstances(stats));
+			appsWithStats.put(existingApp, stats);
+		}
+		return appsWithStats;
+	}
 
 	@Override
 	public CloudApplication getApplication(String appName) {
@@ -1113,10 +1145,22 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 		}
 		return cloudApp;
 	}
+	
+	private CloudApplication getCloudApplication(Map<String, Object> resource) {
+		CloudApplication cloudApp = null;
+		if (resource != null) {
+			cloudApp = resourceMapper.mapResource(resource, CloudApplication.class);
+		}
+		return cloudApp;
+	}
 
 	private int getRunningInstances(UUID appId, CloudApplication.AppState appState) {
-		int running = 0;
 		ApplicationStats appStats = doGetApplicationStats(appId, appState);
+		return getRunningInstances(appStats);
+	}
+	
+	private int getRunningInstances(ApplicationStats appStats) {
+		int running = 0;
 		if (appStats != null && appStats.getRecords() != null) {
 			for (InstanceStats inst : appStats.getRecords()) {
 				if (InstanceState.RUNNING == inst.getState()){
@@ -1131,6 +1175,11 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 	public ApplicationStats getApplicationStats(String appName) {
 		CloudApplication app = getApplication(appName);
 		return doGetApplicationStats(app.getMeta().getGuid(), app.getState());
+	}
+	
+	@Override
+	public ApplicationStats getApplicationStats(CloudApplication application) {
+		return doGetApplicationStats(application.getMeta().getGuid(), application.getState());
 	}
 
 	@SuppressWarnings("unchecked")
