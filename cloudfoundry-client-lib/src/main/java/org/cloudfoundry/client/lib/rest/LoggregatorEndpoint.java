@@ -1,5 +1,7 @@
 package org.cloudfoundry.client.lib.rest;
 
+import java.util.Timer;
+
 import javax.websocket.CloseReason;
 import javax.websocket.Endpoint;
 import javax.websocket.EndpointConfig;
@@ -9,20 +11,22 @@ import org.cloudfoundry.client.lib.ApplicationLogListener;
 import org.cloudfoundry.client.lib.CloudOperationException;
 
 public class LoggregatorEndpoint extends Endpoint {
-    private ApplicationLogListener listener;
-    
-    public LoggregatorEndpoint(ApplicationLogListener listener) {
+    final private ApplicationLogListener listener;
+	final private Timer timer;
+
+    public LoggregatorEndpoint(ApplicationLogListener listener, Timer timer) {
         this.listener = listener;
+        this.timer = timer;
     }
 
     @Override
     public void onOpen(Session session, EndpointConfig config) {
-        session.addMessageHandler(new LoggregatorMessageHandler(listener));
+        session.addMessageHandler(new LoggregatorMessageHandler(listener, timer));
     }
 
     @Override
     public void onClose(Session session, CloseReason closeReason) {
-        if (closeReason.getCloseCode() == CloseReason.CloseCodes.NORMAL_CLOSURE 
+        if (closeReason.getCloseCode() == CloseReason.CloseCodes.NORMAL_CLOSURE
             || closeReason.getCloseCode() == CloseReason.CloseCodes.GOING_AWAY) {
             listener.onComplete();
         } else {
@@ -32,5 +36,5 @@ public class LoggregatorEndpoint extends Endpoint {
 
     public void onError(Session session, Throwable throwable) {
         listener.onError(throwable);
-    }    
+    }
 }

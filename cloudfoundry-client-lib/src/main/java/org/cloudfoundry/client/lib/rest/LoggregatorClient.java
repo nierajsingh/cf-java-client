@@ -18,6 +18,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 import java.util.Map;
+import java.util.Timer;
 import java.util.UUID;
 
 public class LoggregatorClient {
@@ -61,8 +62,9 @@ public class LoggregatorClient {
 		try {
 			WebSocketContainer container = ContainerProvider.getWebSocketContainer();
 			ClientEndpointConfig config = buildClientConfig(configurator);
-			Session session = container.connectToServer(new LoggregatorEndpoint(listener), config, loggregatorUri);
-			return new StreamingLogTokenImpl(session);
+			Timer timer = new Timer(true);
+			Session session = container.connectToServer(new LoggregatorEndpoint(listener, timer), config, loggregatorUri);
+			return new StreamingLogTokenImpl(session, timer);
 		} catch (DeploymentException e) {
 			throw new CloudOperationException(e);
 		} catch (IOException e) {
