@@ -6,17 +6,21 @@ import java.util.Date;
 public class ApplicationLog implements Comparable<ApplicationLog> {
 	public enum MessageType {STDOUT, STDERR}
 
+	private static final long NANOSECONDS_IN_MILLISECOND = 1000000;
+
 	private String appId;
 	private String message;
 	private Date timestamp;
 	private MessageType messageType;
 	private String sourceName;
 	private String sourceId;
+	private long nanosTimestamp;
 
-	public ApplicationLog(String appId, String message, Date timestamp, MessageType messageType, String sourceName, String sourceId) {
+	public ApplicationLog(String appId, String message, long nanosTimestamp, MessageType messageType, String sourceName, String sourceId) {
 		this.appId = appId;
 		this.message = message;
-		this.timestamp = timestamp;
+		this.timestamp = new Date(nanosTimestamp / NANOSECONDS_IN_MILLISECOND);
+		this.nanosTimestamp = nanosTimestamp;
 		this.messageType = messageType;
 		this.sourceName = sourceName;
 		this.sourceId = sourceId;
@@ -53,5 +57,9 @@ public class ApplicationLog implements Comparable<ApplicationLog> {
 	@Override
 	public String toString() {
 		return String.format("%s [%s] %s (%s, %s)", appId, timestamp, message, messageType, sourceName);
+	}
+
+	public long getNanosTimestamp() {
+		return nanosTimestamp;
 	}
 }

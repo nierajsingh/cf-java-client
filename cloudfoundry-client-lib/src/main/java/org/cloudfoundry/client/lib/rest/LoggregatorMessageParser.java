@@ -8,6 +8,7 @@ import org.cloudfoundry.client.lib.domain.ApplicationLog;
 import java.util.Date;
 
 public class LoggregatorMessageParser {
+
 	private static final long NANOSECONDS_IN_MILLISECOND = 1000000;
 
 	public ApplicationLog parseMessage(byte[] rawMessage) throws InvalidProtocolBufferException {
@@ -32,7 +33,7 @@ public class LoggregatorMessageParser {
 
 		return new ApplicationLog(message.getAppId(),
 				message.getMessage().toStringUtf8(),
-				new Date(message.getTimestamp() / NANOSECONDS_IN_MILLISECOND),
+				message.getTimestamp(),
 				messageType,
 				message.getSourceName(), message.getSourceId());
 	}
