@@ -86,6 +86,13 @@ public class MessageSorter {
 		while (null!=(e=fetch())) {
 			listener.onMessage(e.msg);
 		}
+		synchronized (this) {
+			if (queue.isEmpty()) {
+				//Nothing more to do for now. Cancel flush task until its needed again
+				flushTask.cancel();
+				flushTask = null;
+			}
+		}
 	}
 
 	/**
