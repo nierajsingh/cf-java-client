@@ -1,15 +1,13 @@
 package org.cloudfoundry.client.lib.rest;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-import com.google.protobuf.TextFormat;
-import loggregator.LogMessages;
 import org.cloudfoundry.client.lib.domain.ApplicationLog;
 
-import java.util.Date;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.TextFormat;
+
+import loggregator.LogMessages;
 
 public class LoggregatorMessageParser {
-
-	private static final long NANOSECONDS_IN_MILLISECOND = 1000000;
 
 	public ApplicationLog parseMessage(byte[] rawMessage) throws InvalidProtocolBufferException {
 		LogMessages.Message message = LogMessages.Message.parseFrom(rawMessage);
