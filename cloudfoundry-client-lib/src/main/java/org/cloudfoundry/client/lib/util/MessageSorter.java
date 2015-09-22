@@ -37,7 +37,7 @@ public class MessageSorter implements ApplicationLogListener {
 
 	private FlushTask flushTask;
 
-	private Completion completion;
+	private CompletionEvent completionEvent;
 
 	public class FlushTask extends TimerTask {
 		@Override
@@ -46,7 +46,7 @@ public class MessageSorter implements ApplicationLogListener {
 		}
 	}
 
-	private interface Completion {
+	private interface CompletionEvent {
 		void notifyListener();
 	}
 
@@ -98,7 +98,7 @@ public class MessageSorter implements ApplicationLogListener {
 					//received a 'onComplete' event.
 					timer.cancel();
 					flushTask = null;
-					completion.notifyListener();
+					completionEvent.notifyListener();
 				} else {
 					//Nothing more to do for now. Cancel flush task until its needed again.
 					flushTask.cancel();
@@ -133,13 +133,13 @@ public class MessageSorter implements ApplicationLogListener {
 	 * is expected.
 	 */
 	private synchronized boolean isComplete() {
-		return completion!=null;
+		return completionEvent!=null;
 	}
 
 	@Override
 	public synchronized void onComplete() {
 		if (!isComplete()) {
-			completion = new Completion() {
+			completionEvent = new CompletionEvent() {
 				@Override
 				public final void notifyListener() {
 					listener.onComplete();
@@ -151,7 +151,7 @@ public class MessageSorter implements ApplicationLogListener {
 	@Override
 	public synchronized void onError(final Throwable exception) {
 		if (!isComplete()) {
-			completion = new Completion() {
+			completionEvent = new CompletionEvent() {
 				@Override
 				public void notifyListener() {
 					listener.onError(exception);
