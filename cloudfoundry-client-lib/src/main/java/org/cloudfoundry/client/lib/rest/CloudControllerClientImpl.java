@@ -88,6 +88,7 @@ import org.cloudfoundry.client.lib.oauth2.OauthClient;
 import org.cloudfoundry.client.lib.util.CloudEntityResourceMapper;
 import org.cloudfoundry.client.lib.util.CloudUtil;
 import org.cloudfoundry.client.lib.util.JsonUtil;
+import org.cloudfoundry.client.lib.util.MessageSorter;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -251,7 +252,7 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 
 	@Override
 	public StreamingLogToken streamLogs(String appName, ApplicationLogListener listener) {
-		return streamLoggregatorLogs(appName, listener, false);
+		return streamLoggregatorLogs(appName, new MessageSorter(listener), false);
 	}
 
 	@Override
@@ -1065,7 +1066,7 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 		}
 		return apps;
 	}
-	
+
 	public List<CloudApplication> getApplicationsWithBasicInfo() {
 		Map<String, Object> urlVars = new HashMap<String, Object>();
 		String urlPath = "/v2";
@@ -1084,7 +1085,7 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 		}
 		return apps;
 	}
-	
+
 	public Map<CloudApplication, ApplicationStats> getApplicationStats(List<CloudApplication> apps) {
 		Map<CloudApplication, ApplicationStats> appsWithStats = new HashMap<CloudApplication, ApplicationStats>();
 		for (CloudApplication existingApp : apps) {
@@ -1145,7 +1146,7 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 		}
 		return cloudApp;
 	}
-	
+
 	private CloudApplication getCloudApplication(Map<String, Object> resource) {
 		CloudApplication cloudApp = null;
 		if (resource != null) {
@@ -1158,7 +1159,7 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 		ApplicationStats appStats = doGetApplicationStats(appId, appState);
 		return getRunningInstances(appStats);
 	}
-	
+
 	private int getRunningInstances(ApplicationStats appStats) {
 		int running = 0;
 		if (appStats != null && appStats.getRecords() != null) {
@@ -1176,7 +1177,7 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 		CloudApplication app = getApplication(appName);
 		return doGetApplicationStats(app.getMeta().getGuid(), app.getState());
 	}
-	
+
 	@Override
 	public ApplicationStats getApplicationStats(CloudApplication application) {
 		return doGetApplicationStats(application.getMeta().getGuid(), application.getState());

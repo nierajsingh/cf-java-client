@@ -6,18 +6,16 @@ import java.util.TimerTask;
 
 import org.cloudfoundry.client.lib.ApplicationLogListener;
 import org.cloudfoundry.client.lib.domain.ApplicationLog;
-import org.cloudfoundry.client.lib.util.MessageSorter.FlushTask;
-import org.springframework.util.Assert;
 
 /**
- * Keeps messages in a buffer for a minimum amount of time and sorts them by date,
- * before passing them to an log listener.
+ * A wrapper around an ApplicationLogListener that keeps messages in a buffer for a minimum
+ * amount of time and sorts them by timestamp, before passing them to the wrapped log listener.
  * <p>
- * This is needed because 'bursty' groups of message may arrive out of order.
+ * This is needed because 'bursty' groups of messages may arrive out of order.
  *
  * @author Kris De Volder
  */
-public class MessageSorter {
+public class MessageSorter implements ApplicationLogListener {
 
 	/**
 	 * Time in millis that messages must be held in the buffer before they
@@ -39,11 +37,17 @@ public class MessageSorter {
 
 	private FlushTask flushTask;
 
+	private CompletionEvent completionEvent;
+
 	public class FlushTask extends TimerTask {
 		@Override
 		public void run() {
 			flush();
 		}
+	}
+
+	private interface CompletionEvent {
+		void notifyListener();
 	}
 
 	private class Entry implements Comparable<Entry> {
@@ -65,14 +69,19 @@ public class MessageSorter {
 		}
 	}
 
-	public MessageSorter(Timer timer, ApplicationLogListener listener) {
-		Assert.isTrue(timer!=null);
+	public MessageSorter(ApplicationLogListener listener) {
 		this.listener = listener;
-		this.timer = timer;
+		this.timer = new Timer("MessageSorter Timer", true);
 	}
 
 	public synchronized void onMessage(ApplicationLog msg) {
-		queue.add(new Entry(msg));
+		if (!isComplete()) {
+			queue.add(new Entry(msg));
+			ensureFlushTask();
+		}
+	}
+
+	private void ensureFlushTask() {
 		if (flushTask == null) {
 			timer.scheduleAtFixedRate(flushTask=new FlushTask(), HOLD_WINDOW, FLUSH_PERIOD);
 		}
@@ -88,9 +97,17 @@ public class MessageSorter {
 		}
 		synchronized (this) {
 			if (queue.isEmpty()) {
-				//Nothing more to do for now. Cancel flush task until its needed again
-				flushTask.cancel();
-				flushTask = null;
+				if (isComplete()) {
+					//No more work... and no more work should arrive because we already
+					//received a 'onComplete' event.
+					timer.cancel();
+					flushTask = null;
+					completionEvent.notifyListener();
+				} else {
+					//Nothing more to do for now. Cancel flush task until its needed again.
+					flushTask.cancel();
+					flushTask = null;
+				}
 			}
 		}
 	}
@@ -115,5 +132,37 @@ public class MessageSorter {
 		return age >= HOLD_WINDOW;
 	}
 
+	/**
+	 * @return true if either an onError or onComplete has been observed (meaning that no more data
+	 * is expected.
+	 */
+	private synchronized boolean isComplete() {
+		return completionEvent!=null;
+	}
 
+	@Override
+	public synchronized void onComplete() {
+		if (!isComplete()) {
+			completionEvent = new CompletionEvent() {
+				@Override
+				public final void notifyListener() {
+					listener.onComplete();
+				}
+			};
+			ensureFlushTask();
+		}
+	}
+
+	@Override
+	public synchronized void onError(final Throwable exception) {
+		if (!isComplete()) {
+			completionEvent = new CompletionEvent() {
+				@Override
+				public void notifyListener() {
+					listener.onError(exception);
+				}
+			};
+			ensureFlushTask();
+		}
+	}
 }

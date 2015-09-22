@@ -11,16 +11,12 @@ import org.cloudfoundry.client.lib.StreamingLogToken;
 public class StreamingLogTokenImpl implements StreamingLogToken {
     private static long keepAliveTime = 25000; // 25 seconds to match the go client
 
-    private Timer keepAliveTimer;
+    private Timer keepAliveTimer = new Timer(true);
 
     private Session session;
 
     public StreamingLogTokenImpl(Session session) {
-    }
-
-    public StreamingLogTokenImpl(Session session, Timer timer) {
         this.session = session;
-    	this.keepAliveTimer = timer;
         keepAliveTimer.scheduleAtFixedRate(new KeepAliveTimerTask(), keepAliveTime, keepAliveTime);
 	}
 

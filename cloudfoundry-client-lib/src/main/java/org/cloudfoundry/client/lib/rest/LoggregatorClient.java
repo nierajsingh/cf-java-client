@@ -1,11 +1,11 @@
 package org.cloudfoundry.client.lib.rest;
 
-import org.apache.http.conn.ssl.SSLContextBuilder;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.tomcat.websocket.WsWebSocketContainer;
-import org.cloudfoundry.client.lib.ApplicationLogListener;
-import org.cloudfoundry.client.lib.CloudOperationException;
-import org.springframework.web.util.UriTemplate;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
+import java.util.Map;
+import java.util.UUID;
 
 import javax.net.ssl.SSLContext;
 import javax.websocket.ClientEndpointConfig;
@@ -13,13 +13,13 @@ import javax.websocket.ContainerProvider;
 import javax.websocket.DeploymentException;
 import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.security.GeneralSecurityException;
-import java.util.Map;
-import java.util.Timer;
-import java.util.UUID;
+
+import org.apache.http.conn.ssl.SSLContextBuilder;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.tomcat.websocket.WsWebSocketContainer;
+import org.cloudfoundry.client.lib.ApplicationLogListener;
+import org.cloudfoundry.client.lib.CloudOperationException;
+import org.springframework.web.util.UriTemplate;
 
 public class LoggregatorClient {
 	private static final UriTemplate loggregatorStreamUriTemplate = new UriTemplate("{endpoint}/{kind}/?app={appId}");
@@ -62,9 +62,8 @@ public class LoggregatorClient {
 		try {
 			WebSocketContainer container = ContainerProvider.getWebSocketContainer();
 			ClientEndpointConfig config = buildClientConfig(configurator);
-			Timer timer = new Timer(true);
-			Session session = container.connectToServer(new LoggregatorEndpoint(listener, timer), config, loggregatorUri);
-			return new StreamingLogTokenImpl(session, timer);
+			Session session = container.connectToServer(new LoggregatorEndpoint(listener), config, loggregatorUri);
+			return new StreamingLogTokenImpl(session);
 		} catch (DeploymentException e) {
 			throw new CloudOperationException(e);
 		} catch (IOException e) {
