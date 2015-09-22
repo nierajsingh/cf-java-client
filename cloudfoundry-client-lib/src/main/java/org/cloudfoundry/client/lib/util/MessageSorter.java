@@ -77,9 +77,13 @@ public class MessageSorter implements ApplicationLogListener {
 	public synchronized void onMessage(ApplicationLog msg) {
 		if (!isComplete()) {
 			queue.add(new Entry(msg));
-			if (flushTask == null) {
-				timer.scheduleAtFixedRate(flushTask=new FlushTask(), HOLD_WINDOW, FLUSH_PERIOD);
-			}
+			ensureFlushTask();
+		}
+	}
+
+	private void ensureFlushTask() {
+		if (flushTask == null) {
+			timer.scheduleAtFixedRate(flushTask=new FlushTask(), HOLD_WINDOW, FLUSH_PERIOD);
 		}
 	}
 
@@ -145,6 +149,7 @@ public class MessageSorter implements ApplicationLogListener {
 					listener.onComplete();
 				}
 			};
+			ensureFlushTask();
 		}
 	}
 
@@ -157,6 +162,7 @@ public class MessageSorter implements ApplicationLogListener {
 					listener.onError(exception);
 				}
 			};
+			ensureFlushTask();
 		}
 	}
 }
