@@ -101,6 +101,14 @@ public class CloudFoundryClient implements CloudFoundryOperations {
 	                          boolean trustSelfSignedCerts) {
 		this(credentials, cloudControllerUrl, null, (HttpProxyConfiguration) null, trustSelfSignedCerts);
 	}
+	
+	public CloudFoundryClient(CloudCredentials credentials, URL cloudControllerUrl,
+            boolean trustSelfSignedCerts, boolean disableConnectionPool) {
+	       Assert.notNull(cloudControllerUrl, "URL for cloud controller cannot be null");
+	       CloudControllerClientFactory cloudControllerClientFactory =
+	               new CloudControllerClientFactory(null, trustSelfSignedCerts, disableConnectionPool);
+	       this.cc = cloudControllerClientFactory.newCloudController(cloudControllerUrl, credentials, null);
+    }
 
 	public CloudFoundryClient(CloudCredentials credentials, URL cloudControllerUrl,
 	                          HttpProxyConfiguration httpProxyConfiguration) {
@@ -150,6 +158,14 @@ public class CloudFoundryClient implements CloudFoundryOperations {
 	                          boolean trustSelfSignedCerts) {
 		this(credentials, cloudControllerUrl, orgName, spaceName, null, trustSelfSignedCerts);
 	}
+	
+	public CloudFoundryClient(CloudCredentials credentials, URL cloudControllerUrl, String orgName, String spaceName,
+            boolean trustSelfSignedCerts, boolean disableConnectionPool) {
+        Assert.notNull(cloudControllerUrl, "URL for cloud controller cannot be null");
+        CloudControllerClientFactory cloudControllerClientFactory =
+        new CloudControllerClientFactory(null, trustSelfSignedCerts, disableConnectionPool);
+        this.cc = cloudControllerClientFactory.newCloudController(cloudControllerUrl, credentials, orgName, spaceName);
+    }
 
 	public CloudFoundryClient(CloudCredentials credentials, URL cloudControllerUrl, String orgName, String spaceName,
 							  HttpProxyConfiguration httpProxyConfiguration) {

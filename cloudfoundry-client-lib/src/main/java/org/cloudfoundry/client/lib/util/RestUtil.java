@@ -15,6 +15,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.conn.routing.HttpRoutePlanner;
 import org.apache.http.conn.ssl.SSLContextBuilder;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.impl.NoConnectionReuseStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
@@ -42,7 +43,7 @@ import org.springframework.web.client.RestTemplate;
  * @author Thomas Risberg
  */
 public class RestUtil {
-
+	
 	public RestTemplate createRestTemplate(HttpProxyConfiguration httpProxyConfiguration, boolean trustSelfSignedCerts) {
 		RestTemplate restTemplate = new LoggingRestTemplate();
 		restTemplate.setRequestFactory(createRequestFactory(httpProxyConfiguration, trustSelfSignedCerts));
@@ -52,7 +53,20 @@ public class RestUtil {
 		return restTemplate;
 	}
 
+	public RestTemplate createRestTemplate(HttpProxyConfiguration httpProxyConfiguration, boolean trustSelfSignedCerts, boolean disableConnectionPool) {
+		RestTemplate restTemplate = new LoggingRestTemplate();
+		restTemplate.setRequestFactory(createRequestFactory(httpProxyConfiguration, trustSelfSignedCerts, disableConnectionPool));
+		restTemplate.setErrorHandler(new CloudControllerResponseErrorHandler());
+		restTemplate.setMessageConverters(getHttpMessageConverters());
+
+		return restTemplate;
+	}
+	
 	public ClientHttpRequestFactory createRequestFactory(HttpProxyConfiguration httpProxyConfiguration, boolean trustSelfSignedCerts) {
+	    return createRequestFactory(httpProxyConfiguration, trustSelfSignedCerts, false);
+	}
+
+	public ClientHttpRequestFactory createRequestFactory(HttpProxyConfiguration httpProxyConfiguration, boolean trustSelfSignedCerts, boolean disableConnectionPool) {
 		HttpClientBuilder httpClientBuilder = HttpClients.custom().useSystemProperties();
 
 		if (trustSelfSignedCerts) {
@@ -75,6 +89,9 @@ public class RestUtil {
 			HttpRoutePlanner routePlanner = new DefaultProxyRoutePlanner(proxy);
 			httpClientBuilder.setRoutePlanner(routePlanner);
 		}
+		if (disableConnectionPool) {
+			httpClientBuilder.setConnectionReuseStrategy(NoConnectionReuseStrategy.INSTANCE);
+		}
 
 		HttpClient httpClient = httpClientBuilder.build();
 		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
@@ -82,6 +99,10 @@ public class RestUtil {
 		return requestFactory;
 	}
 
+	public OauthClient createOauthClient(URL authorizationUrl, HttpProxyConfiguration httpProxyConfiguration, boolean trustSelfSignedCerts, boolean disableConnectionPool) {
+		return new OauthClient(authorizationUrl, createRestTemplate(httpProxyConfiguration, trustSelfSignedCerts, disableConnectionPool));
+	}
+	
 	public OauthClient createOauthClient(URL authorizationUrl, HttpProxyConfiguration httpProxyConfiguration, boolean trustSelfSignedCerts) {
 		return new OauthClient(authorizationUrl, createRestTemplate(httpProxyConfiguration, trustSelfSignedCerts));
 	}

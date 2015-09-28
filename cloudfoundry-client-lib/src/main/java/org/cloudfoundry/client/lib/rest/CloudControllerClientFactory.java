@@ -48,17 +48,24 @@ public class CloudControllerClientFactory {
 	private final boolean trustSelfSignedCerts;
 
 	private ObjectMapper objectMapper;
+	
+	private final boolean disableConnectionPool;
 
 	private final Map<URL, Map<String, Object>> infoCache = new HashMap<URL, Map<String, Object>>();
 
-	public CloudControllerClientFactory(HttpProxyConfiguration httpProxyConfiguration, boolean trustSelfSignedCerts) {
+	public CloudControllerClientFactory(HttpProxyConfiguration httpProxyConfiguration, boolean trustSelfSignedCerts, boolean disableConnectionPool) {
 		this.restUtil = new RestUtil();
-		this.restTemplate = restUtil.createRestTemplate(httpProxyConfiguration, trustSelfSignedCerts);
+		this.restTemplate = restUtil.createRestTemplate(httpProxyConfiguration, trustSelfSignedCerts, disableConnectionPool);
 
 		this.httpProxyConfiguration = httpProxyConfiguration;
 		this.trustSelfSignedCerts = trustSelfSignedCerts;
+		this.disableConnectionPool = disableConnectionPool;
 
 		this.objectMapper = new ObjectMapper();
+	}
+	
+	public CloudControllerClientFactory(HttpProxyConfiguration httpProxyConfiguration, boolean trustSelfSignedCerts) {
+		this(httpProxyConfiguration, trustSelfSignedCerts, false);
 	}
 
 	public CloudControllerClient newCloudController(URL cloudControllerUrl, CloudCredentials cloudCredentials,
@@ -90,7 +97,7 @@ public class CloudControllerClientFactory {
 	private void createOauthClient(URL cloudControllerUrl) {
 		Map<String, Object> infoMap = getInfoMap(cloudControllerUrl);
 		URL authorizationEndpoint = getAuthorizationEndpoint(infoMap, cloudControllerUrl);
-		this.oauthClient = restUtil.createOauthClient(authorizationEndpoint, httpProxyConfiguration, trustSelfSignedCerts);
+		this.oauthClient = restUtil.createOauthClient(authorizationEndpoint, httpProxyConfiguration, trustSelfSignedCerts, this.disableConnectionPool);
 	}
 
 	private Map<String, Object> getInfoMap(URL cloudControllerUrl) {
