@@ -560,6 +560,7 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 		String build = CloudUtil.parse(String.class, infoV2Map.get("build"));
 		String version = "" + CloudUtil.parse(Number.class, infoV2Map.get("version"));
 		String description = CloudUtil.parse(String.class, infoV2Map.get("description"));
+		String apiVersion = CloudUtil.parse(String.class, infoV2Map.get("api_version"));
 
 		CloudInfo.Limits limits = null;
 		CloudInfo.Usage usage = null;
@@ -573,7 +574,7 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 		String loggregatorEndpoint = CloudUtil.parse(String.class, infoV2Map.get("logging_endpoint"));
 
 		return new CloudInfo(name, support, authorizationEndpoint, build, version, (String)userMap.get("user_name"),
-				description, limits, usage, debug, loggregatorEndpoint);
+				description, limits, usage, debug, loggregatorEndpoint, apiVersion);
 	}
 
 	@Override

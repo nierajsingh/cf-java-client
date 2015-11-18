@@ -39,6 +39,7 @@ public class CloudInfo {
 	private String authorizationEndpoint;
 	private boolean allowDebug;
     private String loggregatorEndpoint;
+    private String apiVersion;
 
 	@SuppressWarnings("unchecked")
 	public CloudInfo(Map<String, Object> infoMap) {
@@ -46,6 +47,7 @@ public class CloudInfo {
 		support = CloudUtil.parse(String.class, infoMap.get("support"));
 		build = CloudUtil.parse(String.class, infoMap.get("build"));
 		version = CloudUtil.parse(String.class, infoMap.get("version"));
+		apiVersion = CloudUtil.parse(String.class, infoMap.get("api_version"));
 		if (version == null) {
 			Number iVersion = CloudUtil.parse(Number.class, infoMap.get("version"));
 			if (iVersion != null) {
@@ -80,13 +82,14 @@ public class CloudInfo {
 	}
 
 	public CloudInfo(String name, String support, String authorizationEndpoint, String build, String version,
-			String user, String description, Limits limits, Usage usage, boolean allowDebug, String loggregatorEndpoint) {
+			String user, String description, Limits limits, Usage usage, boolean allowDebug, String loggregatorEndpoint, String apiVersion) {
 		this.name = name;
 		this.support = support;
 		this.authorizationEndpoint = authorizationEndpoint;
         this.loggregatorEndpoint = loggregatorEndpoint;
 		this.build = build;
 		this.version = version;
+		this.apiVersion = apiVersion;
 		this.user = user;
 		this.description = description;
 		this.limits = limits;
@@ -132,6 +135,10 @@ public class CloudInfo {
 
 	public String getVersion() {
 		return version;
+	}
+	
+	public String getApiVersion() {
+		return apiVersion;
 	}
 
 	public boolean getAllowDebug() {
