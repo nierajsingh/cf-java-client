@@ -72,7 +72,7 @@ public class LoggregatorClient {
 
 	private ClientEndpointConfig buildClientConfig(ClientEndpointConfig.Configurator configurator) {
 		ClientEndpointConfig config = ClientEndpointConfig.Builder.create().configurator(configurator).build();
-
+		configureClientEndpoint(config);
 		if (trustSelfSignedCerts) {
 			SSLContext sslContext = buildSslContext();
 			Map<String, Object> userProperties = config.getUserProperties();
@@ -80,6 +80,10 @@ public class LoggregatorClient {
 		}
 
 		return config;
+	}
+	
+	protected void configureClientEndpoint(ClientEndpointConfig config) {
+		config.getUserProperties().put(WsWebSocketContainer.IO_TIMEOUT_MS_PROPERTY, "60000");
 	}
 
 	private SSLContext buildSslContext() {
