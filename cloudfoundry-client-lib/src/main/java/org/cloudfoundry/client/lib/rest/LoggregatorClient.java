@@ -73,11 +73,10 @@ public class LoggregatorClient {
 	private ClientEndpointConfig buildClientConfig(ClientEndpointConfig.Configurator configurator) {
 		ClientEndpointConfig config = ClientEndpointConfig.Builder.create().configurator(configurator).build();
 		configureClientEndpoint(config);
-		if (trustSelfSignedCerts) {
-			SSLContext sslContext = buildSslContext();
-			Map<String, Object> userProperties = config.getUserProperties();
-			userProperties.put(WsWebSocketContainer.SSL_CONTEXT_PROPERTY, sslContext);
-		}
+		SSLContext sslContext = buildSslContext(trustSelfSignedCerts);
+
+		Map<String, Object> userProperties = config.getUserProperties();
+		userProperties.put(WsWebSocketContainer.SSL_CONTEXT_PROPERTY, sslContext);
 
 		return config;
 	}
@@ -86,13 +85,15 @@ public class LoggregatorClient {
 		config.getUserProperties().put(WsWebSocketContainer.IO_TIMEOUT_MS_PROPERTY, "60000");
 	}
 
-	private SSLContext buildSslContext() {
-		try {
-			SSLContextBuilder contextBuilder = new SSLContextBuilder().
-					useTLS().
-					loadTrustMaterial(null, new TrustSelfSignedStrategy());
+	private SSLContext buildSslContext(boolean trustSelfSignedCerts) {
 
+		try {
+			SSLContextBuilder contextBuilder = new SSLContextBuilder().useProtocol("TLSv1.2");
+			if (trustSelfSignedCerts) {
+				contextBuilder = contextBuilder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
+			}
 			return contextBuilder.build();
+
 		} catch (GeneralSecurityException e) {
 			throw new CloudOperationException(e);
 		}
