@@ -2271,7 +2271,7 @@ public class CloudFoundryClientTest {
 
 	@Test
 	public void loginWithPasscodeHandlesMultipleCallsToLogin() throws Exception {
-		if(!SSO_ENABLED) { return; }
+		assumeTrue(SSO_ENABLED);
 		
 		String passcode = getOtpPasscodeForTest();
 		assumeNotNull(passcode);
@@ -2288,7 +2288,7 @@ public class CloudFoundryClientTest {
 
 	@Test
 	public void refreshTokenOnExpirationWithPasscodeLogin() throws Exception {
-		if(!SSO_ENABLED) { return; }
+		assumeTrue(SSO_ENABLED);
 		
 		String passcode = getOtpPasscodeForTest();
 		assumeNotNull(passcode);
@@ -2317,7 +2317,7 @@ public class CloudFoundryClientTest {
 
 	@Test
 	public void obtainPasscodeForLoggedInUser() throws Exception {
-		if(!SSO_ENABLED) { return; }
+		assumeTrue(SSO_ENABLED);
 		
 		String passcodePattern = "[A-Za-z0-9]{6}";
 
