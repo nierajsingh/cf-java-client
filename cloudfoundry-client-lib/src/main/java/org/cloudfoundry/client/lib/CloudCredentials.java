@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2012 the original author or authors.
+ * Copyright 2009-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,8 @@ public class CloudCredentials {
 	private OAuth2AccessToken token;
 
 	private String proxyUser;
+
+	private String passcode;
 
 	/**
 	 * Create credentials using email and password.
@@ -86,6 +88,17 @@ public class CloudCredentials {
 		this.token = token;
 	}
 
+	/**
+	 * Create credentials using a token and passcode
+	 *
+	 * @param token token to use for authorization
+	 */
+	public CloudCredentials(String passcode, OAuth2AccessToken token) {
+		this.passcode = passcode;
+		this.token = token;
+	}
+
+	
     /**
      * Create credentials using a token and indicates if the token is
      * refreshable or not.
@@ -134,6 +147,15 @@ public class CloudCredentials {
 		this.clientId = cloudCredentials.getClientId();
 		this.token = cloudCredentials.getToken();
 		this.proxyUser = proxyForUser;
+	}
+
+	/**
+	 * Create credentials using OTP passcode.
+	 *
+	 * @param passcode passcode to authenticate with
+	 */
+	public CloudCredentials(String passcode) {
+		this.passcode = passcode;
 	}
 
 	/**
@@ -220,5 +242,21 @@ public class CloudCredentials {
 	 */
 	public boolean isRefreshable() {
 		return refreshable;
+	}
+
+	/**
+	 * Get the OTP passcode
+	 *
+	 * @return the passcode
+	 */
+	public String getPasscode() { return passcode; }
+
+	/**
+	 * Is this a authentication attempt with OTP passcode?
+	 *
+	 * @return whether a passcode is set
+	 */
+	public boolean isPasscodeSet()  {
+		return passcode != null;
 	}
 }
