@@ -1,6 +1,6 @@
 package org.cloudfoundry.client.lib.util;
 
-import static org.apache.http.conn.ssl.SSLSocketFactory.BROWSER_COMPATIBLE_HOSTNAME_VERIFIER;
+import static org.apache.http.conn.ssl.SSLSocketFactory.*;
 
 import java.net.URL;
 import java.security.GeneralSecurityException;
@@ -71,7 +71,7 @@ public class RestUtil {
 
 		if (trustSelfSignedCerts) {
 			httpClientBuilder.setSslcontext(buildSslContext());
-			httpClientBuilder.setHostnameVerifier(BROWSER_COMPATIBLE_HOSTNAME_VERIFIER);
+			httpClientBuilder.setHostnameVerifier(ALLOW_ALL_HOSTNAME_VERIFIER);
 		}
 
 		if (httpProxyConfiguration != null) {
