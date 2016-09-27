@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2012 the original author or authors.
+ * Copyright 2009-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,10 @@ public class CloudApplication extends CloudEntity {
 	private int runningInstances;
 	private List<String> env = new ArrayList<String>();
 
+	private boolean diego;
+	
+	private boolean enableSsh;
+	
 	public CloudApplication(Meta meta, String name) {
 		super(meta, name);
 	}
@@ -81,6 +85,24 @@ public class CloudApplication extends CloudEntity {
 		if (attributes.containsKey("disk_quota")) {
 			diskQuota = (Integer) attributes.get("disk_quota");
 		}
+
+		try {
+			if(attributes.containsKey("diego")) {
+				this.diego = Boolean.parseBoolean((String)attributes.get("diego"));
+			}
+		} catch(Exception e) {
+			this.diego = false;
+		}
+		
+		try {
+			if(attributes.containsKey("enable_ssh")) {
+				this.enableSsh = Boolean.parseBoolean((String)attributes.get("enable_ssh"));
+			}
+		} catch(Exception e) {
+			this.enableSsh = false;
+		}
+
+		
 		env = (List<String>) attributes.get("env");
 
 		Map<String, Object> metaValue = parse(Map.class,
@@ -250,5 +272,21 @@ public class CloudApplication extends CloudEntity {
 				+ ", memory=" + memory + ", diskQuota=" + diskQuota
 				+ ", state=" + state + ", debug=" + debug + ", uris=" + uris + ", services=" + services
 				+ ", env=" + env + ", space=" + space.getName() + "]";
+	}
+	
+	public boolean isDiego() {
+		return diego;
+	}
+	
+	public void setDiego(boolean diego) {
+		this.diego = diego;
+	}
+	
+	public boolean isEnableSsh() {
+		return enableSsh;
+	}
+	
+	public void setEnableSsh(boolean enableSsh) {
+		this.enableSsh = enableSsh;
 	}
 }
