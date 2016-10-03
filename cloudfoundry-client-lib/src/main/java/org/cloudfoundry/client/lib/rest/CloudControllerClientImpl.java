@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013 the original author or authors.
+ * Copyright 2009-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1773,7 +1773,22 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 		appRequest.put("environment_json", env);
 		getRestTemplate().put(getUrl("/v2/apps/{guid}"), appRequest, appId);
 	}
+	
+	@Override
+	public void updateApplicationDiego(String appName, boolean diego) {
+		UUID appId = getAppId(appName);
+		HashMap<String, Object> diegoRequest = new HashMap<String, Object>();
+		diegoRequest.put("diego", (boolean) (diego ? true : false));
+		getRestTemplate().put(getUrl("/v2/apps/{guid}"), diegoRequest, appId);		
+	}
 
+	public void updateApplicationEnableSsh(String appName, boolean enableSsh) {
+		UUID appId = getAppId(appName);
+		HashMap<String, Object> esRequest = new HashMap<String, Object>();
+		esRequest.put("enable_ssh", (boolean) (enableSsh ? true : false));
+		getRestTemplate().put(getUrl("/v2/apps/{guid}"), esRequest, appId);				
+	}
+	
 	@Override
 	public void updateApplicationEnv(String appName, List<String> env) {
 		Map<String, String> envHash = new HashMap<String, String>();
@@ -2652,7 +2667,5 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 
 		getRestTemplate().delete(getUrl(path), pathVariables);
 	}
-
-
 
 }

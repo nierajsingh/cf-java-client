@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013 the original author or authors.
+ * Copyright 2009-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,6 +172,10 @@ public interface CloudControllerClient {
 
 	void updateApplicationEnv(String appName, List<String> env);
 
+	void updateApplicationDiego(String appName, boolean diego);
+	
+	void updateApplicationEnableSsh(String appName, boolean enableSsh);
+	
 	List<CloudEvent> getEvents();
 
 	List<CloudEvent> getApplicationEvents(String appName);

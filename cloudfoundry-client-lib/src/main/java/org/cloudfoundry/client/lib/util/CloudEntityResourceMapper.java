@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2012 the original author or authors.
+ * Copyright 2009-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -188,6 +188,22 @@ public class CloudEntityResourceMapper {
 		if (runningInstancesAttribute != null) {
 			app.setRunningInstances(runningInstancesAttribute);
 		}
+		
+		try {
+			Boolean diego = getEntityAttribute(resource, "diego", Boolean.class);
+			app.setDiego(diego != null ? diego : false);
+		} catch(Exception e) {
+			// Prevent unexpected parsing errors from blocking parse of further attributes
+		}
+
+		try {
+			Boolean enableSsh = getEntityAttribute(resource, "enable_ssh", Boolean.class);
+			app.setEnableSsh(enableSsh != null ? enableSsh : false);
+			
+		} catch(Exception e) {
+			// Prevent unexpected parsing errors from blocking parse of further attributes
+		}
+		
 		String command = getEntityAttribute(resource, "command", String.class);
 		String buildpack = getEntityAttribute(resource, "buildpack", String.class);
 		String detectedBuildpack = getEntityAttribute(resource, "detected_buildpack", String.class);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013 the original author or authors.
+ * Copyright 2009-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -754,4 +754,15 @@ public class CloudFoundryClient implements CloudFoundryOperations {
 	public List<CloudSpace> getSpacesBoundToSecurityGroup(String securityGroupName) {
 		return cc.getSpacesBoundToSecurityGroup(securityGroupName);
 	}
+
+	@Override
+	public void updateApplicationDiego(String appName, boolean diego) {
+		cc.updateApplicationDiego(appName, diego);
+	}
+	
+	@Override
+	public void updateApplicationEnableSsh(String appName, boolean enableSsh) {
+		cc.updateApplicationEnableSsh(appName, enableSsh);
+	}
+
 }
