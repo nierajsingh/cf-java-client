@@ -1,5 +1,8 @@
 package org.cloudfoundry.client.lib.rest;
 
+import java.io.IOException;
+import java.util.Map;
+
 import org.cloudfoundry.client.lib.CloudFoundryException;
 import org.cloudfoundry.client.lib.NotFinishedStagingException;
 import org.cloudfoundry.client.lib.StagingErrorException;
@@ -12,9 +15,6 @@ import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClientException;
 
-import java.io.IOException;
-import java.util.Map;
-
 public class CloudControllerResponseErrorHandler extends DefaultResponseErrorHandler {
 	@Override
 	public void handleError(ClientHttpResponse response) throws IOException {
@@ -23,10 +23,42 @@ public class CloudControllerResponseErrorHandler extends DefaultResponseErrorHan
 			case CLIENT_ERROR:
 				throw getException(response);
 			case SERVER_ERROR:
-				throw new HttpServerErrorException(statusCode, response.getStatusText());
+				throw getServerException(response);
 			default:
 				throw new RestClientException("Unknown status code [" + statusCode + "]");
 		}
+	}
+	
+	private static HttpServerErrorException getServerException(ClientHttpResponse response) throws IOException {
+		HttpStatus statusCode = response.getStatusCode();
+
+		String description = null;
+
+		ObjectMapper mapper = new ObjectMapper(); // can reuse, share globally
+
+		try {
+			if (response.getBody() != null) {
+
+				@SuppressWarnings("unchecked")
+				Map<String, Object> map = mapper.readValue(response.getBody(), Map.class);
+				
+				Object descVal = map.get("description");
+				if(descVal != null) {
+					description = CloudUtil.parse(String.class, descVal);					
+				}
+			}
+		} catch(Exception e) {
+			// Fall through: For the server case, to keep from breaking existing code, we catch all exceptions.
+		}
+		
+		String returnMessage = response.getStatusText();
+		
+		if(description != null && description.trim().length() > 0) {
+			returnMessage = returnMessage + " - "+ description.trim();
+		}
+				
+		return new HttpServerErrorException(statusCode, returnMessage);
+
 	}
 
 	private static CloudFoundryException getException(ClientHttpResponse response) throws IOException {
