@@ -927,8 +927,12 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 
 	@Override
 	public void deleteService(String serviceName) {
-		CloudService cloudService = getService(serviceName);
-		doDeleteService(cloudService);
+		// Old implementation that fetched the full service instance
+		// in order to get the UUID. Fetching full service instance
+		// fails on some CC API as it uses deprecated inline depth 0
+//		CloudService cloudService = getService(serviceName);
+		UUID uuid = getServiceUuid(serviceName);
+		doDeleteService(uuid);
 	}
 
 	@Override
@@ -1580,9 +1584,9 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 		// services to add
 		for (String serviceName : services) {
 			if (!app.getServices().contains(serviceName)) {
-				CloudService cloudService = getService(serviceName);
-				if (cloudService != null) {
-					addServices.add(cloudService.getMeta().getGuid());
+				UUID uuid = getServiceUuid(serviceName);
+				if (uuid != null) {
+					addServices.add(uuid);
 				}
 				else {
 					throw new CloudFoundryException(HttpStatus.NOT_FOUND, "Service with name " + serviceName +
@@ -1593,9 +1597,9 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 		// services to delete
 		for (String serviceName : app.getServices()) {
 			if (!services.contains(serviceName)) {
-				CloudService cloudService = getService(serviceName);
-				if (cloudService != null) {
-					deleteServices.add(cloudService.getMeta().getGuid());
+				UUID uuid = getServiceUuid(serviceName);
+				if (uuid != null) {
+					deleteServices.add(uuid);
 				}
 			}
 		}
@@ -1841,6 +1845,29 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 		CloudService cloudService = getService(serviceName);
 		UUID appId = getAppId(appName);
 		doUnbindService(appId, cloudService.getMeta().getGuid());
+	}
+
+	private UUID getServiceUuid(String serviceName) {
+		String urlPath = "/v2";
+		Map<String, Object> urlVars = new HashMap<String, Object>();
+		if (sessionSpace != null) {
+			urlVars.put("space", sessionSpace.getMeta().getGuid());
+			urlPath = urlPath + "/spaces/{space}";
+		}
+		urlVars.put("q", "name:" + serviceName);
+		urlPath = urlPath + "/service_instances?q={q}&return_user_provided_service_instances=true";
+
+		List<Map<String, Object>> resources = getAllResources(urlPath, urlVars);
+
+		if (resources.size() > 0) {
+			Map<String, Object> serviceResource = resources.get(0);
+	
+			CloudService service = resourceMapper.mapResource(serviceResource, CloudService.class);
+			if (service != null) {
+				return service.getMeta().getGuid();
+			}
+		}
+		return null;
 	}
 
 	@Override
@@ -2135,6 +2162,10 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 		return routes;
 	}
 
+	/**
+	 * Unbinds service from applications and then deletes it. This is the "legacy" implementation of deleting services in v1 client,
+	 * and may not always work with all CC API. 
+	 */
 	private void doDeleteService(CloudService cloudService) {
 		List<UUID> appIds = getAppsBoundToService(cloudService);
 		if (appIds.size() > 0) {
@@ -2147,6 +2178,18 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 				HttpMethod.DELETE, HttpEntity.EMPTY,
 				new ParameterizedTypeReference<Map<String, Object>>() {},
 				cloudService.getMeta().getGuid());
+		waitForAsyncJobCompletion(response.getBody());
+	}
+
+	/**
+	 * Only deletes the service. Does not perform any unbinding from applications prior to deleting service.
+	 */
+	private void doDeleteService(UUID cloudServiceUuid) {
+		ResponseEntity<Map<String, Object>> response =
+			getRestTemplate().exchange(getUrl("/v2/service_instances/{guid}?async=true"),
+				HttpMethod.DELETE, HttpEntity.EMPTY,
+				new ParameterizedTypeReference<Map<String, Object>>() {},
+				cloudServiceUuid);
 		waitForAsyncJobCompletion(response.getBody());
 	}
 
