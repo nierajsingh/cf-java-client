@@ -933,7 +933,7 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 		// alternate is to fetch UUID directly which does not require full service
 		// instance information
 //		CloudService cloudService = getService(serviceName);
-		UUID uuid = getServiceUuid(serviceName);
+		UUID uuid = getServiceGuid(serviceName);
 		doDeleteService(uuid);
 	}
 
@@ -1586,7 +1586,7 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 		// services to add
 		for (String serviceName : services) {
 			if (!app.getServices().contains(serviceName)) {
-				UUID uuid = getServiceUuid(serviceName);
+				UUID uuid = getServiceGuid(serviceName);
 				if (uuid != null) {
 					addServices.add(uuid);
 				}
@@ -1599,7 +1599,7 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 		// services to delete
 		for (String serviceName : app.getServices()) {
 			if (!services.contains(serviceName)) {
-				UUID uuid = getServiceUuid(serviceName);
+				UUID uuid = getServiceGuid(serviceName);
 				if (uuid != null) {
 					deleteServices.add(uuid);
 				}
@@ -1850,11 +1850,11 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 	}
 
 	/**
-	 *  Fetches the UUID of a service, if it exits.
+	 *  Fetches the GUID of a service, if it exits.
 	 * @param serviceName
-	 * @return UUID of service, if it exists. Null otherwise
+	 * @return GUID of service, if it exists. Null otherwise
 	 */
-	private UUID getServiceUuid(String serviceName) {
+	private UUID getServiceGuid(String serviceName) {
 		String urlPath = "/v2";
 		Map<String, Object> urlVars = new HashMap<String, Object>();
 		if (sessionSpace != null) {
