@@ -927,9 +927,11 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 
 	@Override
 	public void deleteService(String serviceName) {
-		// Old implementation that fetched the full service instance
+		// Commenting old implementation that fetched the full service instance
 		// in order to get the UUID. Fetching full service instance
-		// fails on some CC API as it uses deprecated inline depth 0
+		// fails on some CC API when using inline-relations-depth=0, so
+		// alternate is to fetch UUID directly which does not require full service
+		// instance information
 //		CloudService cloudService = getService(serviceName);
 		UUID uuid = getServiceUuid(serviceName);
 		doDeleteService(uuid);
@@ -1847,6 +1849,11 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 		doUnbindService(appId, cloudService.getMeta().getGuid());
 	}
 
+	/**
+	 *  Fetches the UUID of a service, if it exits.
+	 * @param serviceName
+	 * @return UUID of service, if it exists. Null otherwise
+	 */
 	private UUID getServiceUuid(String serviceName) {
 		String urlPath = "/v2";
 		Map<String, Object> urlVars = new HashMap<String, Object>();
