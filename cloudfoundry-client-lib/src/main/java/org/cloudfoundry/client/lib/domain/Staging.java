@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2012 the original author or authors.
+ * Copyright 2009-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,8 @@ public class Staging {
 	private String buildpackUrl;
 	private String detectedBuildpack;
 	private String stack;
+	private HealthCheckType healthCheckType;
+	private String healthCheckHttpEndpoint;
 	private Integer healthCheckTimeout;
 
 	/**
@@ -128,6 +130,14 @@ public class Staging {
 	public Integer getHealthCheckTimeout() {
 		return healthCheckTimeout;
 	}
+	
+	public String getHealthCheckHttpEndpoint() {
+		return healthCheckHttpEndpoint;
+	}
+
+	public HealthCheckType getHealthCheckType() {
+		return healthCheckType;
+	}
 
 	@Override
 	public String toString() {
@@ -135,6 +145,60 @@ public class Staging {
 				" buildpack=" + getBuildpackUrl() +
 				" stack=" + getStack() +
 				" healthCheckTimeout=" + getHealthCheckTimeout() +
+				" healthCheckType=" + getHealthCheckType() +
+				" healthCheckHttpEndpoint=" + getHealthCheckHttpEndpoint() +
 				"]";
+	}
+
+	public static StagingBuilder builder() {
+		return new StagingBuilder();
+	}
+	
+	public static class StagingBuilder {
+		
+		private final Staging staging = new Staging();
+		
+		public StagingBuilder() {
+			
+		}
+		
+		public StagingBuilder buildpack(String buildpack) {
+			staging.buildpackUrl = buildpack;
+			return this;
+		}
+		
+		public StagingBuilder stack(String stack) {
+			staging.stack = stack;
+			return this;
+		}
+		
+		public StagingBuilder healthCheckType(HealthCheckType healthCheckType) {
+			staging.healthCheckType = healthCheckType;
+			return this;
+		}
+		
+		public StagingBuilder healthCheckTimeout(Integer healthCheckTimeout) {
+			staging.healthCheckTimeout = healthCheckTimeout;
+			return this;
+		}
+		
+		public StagingBuilder healthCheckHttpEndpoint(String healthCheckHttpEndpoint) {
+			staging.healthCheckHttpEndpoint = healthCheckHttpEndpoint;
+			return this;
+		}
+		
+		public StagingBuilder detectedBuildpack(String detectedBuildpack) {
+			staging.detectedBuildpack = detectedBuildpack;
+			return this;
+		}
+		
+		public StagingBuilder command(String command) {
+			staging.command = command;
+			return this;
+		}
+		
+		public Staging build() {
+			return staging;
+		}
 	}
 }

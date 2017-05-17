@@ -36,6 +36,7 @@ import org.cloudfoundry.client.lib.domain.CloudStack;
 import org.cloudfoundry.client.lib.domain.SecurityGroupRule;
 import org.cloudfoundry.client.lib.domain.Staging;
 import org.cloudfoundry.client.lib.domain.CloudUser;
+import org.cloudfoundry.client.lib.domain.HealthCheckType;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -210,7 +211,20 @@ public class CloudEntityResourceMapper {
 		Map<String, Object> stackResource = getEmbeddedResource(resource, "stack");
 		CloudStack stack = mapStackResource(stackResource);
 		Integer healthCheckTimeout = getEntityAttribute(resource, "health_check_timeout", Integer.class);
-		Staging staging = new Staging(command, buildpack, stack.getName(), healthCheckTimeout, detectedBuildpack);
+		
+		String healthCheckHttpEndpoint = getEntityAttribute(resource, "health_check_http_endpoint", String.class);
+		String healthCheckTypeVal = getEntityAttribute(resource, "health_check_type", String.class);
+		HealthCheckType healthCheckType =  HealthCheckType.from(healthCheckTypeVal);
+		Staging staging = Staging.builder()
+				.command(command)
+				.buildpack(buildpack)
+				.stack(stack.getName())
+				.detectedBuildpack(detectedBuildpack)
+				.healthCheckTimeout(healthCheckTimeout)
+				.healthCheckHttpEndpoint(healthCheckHttpEndpoint)
+				.healthCheckType(healthCheckType)
+		        .build();
+				
 		app.setStaging(staging);
 
 		Map<String, Object> spaceResource = getEmbeddedResource(resource, "space");

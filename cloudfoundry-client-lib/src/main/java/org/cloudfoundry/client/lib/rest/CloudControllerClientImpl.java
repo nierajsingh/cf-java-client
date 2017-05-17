@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2016 the original author or authors.
+ * Copyright 2009-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1206,6 +1206,12 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 		}
 		if (staging.getHealthCheckTimeout() != null) {
 			appRequest.put("health_check_timeout", staging.getHealthCheckTimeout());
+		}
+		if (staging.getHealthCheckHttpEndpoint() != null) {
+			appRequest.put("health_check_http_endpoint", staging.getHealthCheckHttpEndpoint());
+		}
+		if (staging.getHealthCheckType() != null) {
+			appRequest.put("health_check_type", staging.getHealthCheckType().toString());
 		}
 	}
 

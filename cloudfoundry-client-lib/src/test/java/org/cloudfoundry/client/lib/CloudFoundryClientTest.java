@@ -61,6 +61,7 @@ import org.cloudfoundry.client.lib.domain.CloudStack;
 import org.cloudfoundry.client.lib.domain.CloudUser;
 import org.cloudfoundry.client.lib.domain.CrashInfo;
 import org.cloudfoundry.client.lib.domain.CrashesInfo;
+import org.cloudfoundry.client.lib.domain.HealthCheckType;
 import org.cloudfoundry.client.lib.domain.InstanceInfo;
 import org.cloudfoundry.client.lib.domain.InstanceState;
 import org.cloudfoundry.client.lib.domain.InstanceStats;
@@ -515,6 +516,33 @@ public class CloudFoundryClientTest {
 		assertEquals(CloudApplication.AppState.STOPPED, app.getState());
 
 		assertEquals(2, app.getStaging().getHealthCheckTimeout().intValue());
+	}
+	
+	@Test
+	public void createApplicationWithHealthCheckType() throws IOException {
+		String appName = namespacedAppName("health_check_type");
+		Staging staging = Staging.builder().healthCheckType(HealthCheckType.process).build();
+		createSpringApplication(appName, staging);
+
+		CloudApplication app = connectedClient.getApplication(appName);
+		assertNotNull(app);
+		assertEquals(CloudApplication.AppState.STOPPED, app.getState());
+
+		assertEquals(HealthCheckType.process, app.getStaging().getHealthCheckType());
+	}
+	
+	@Test
+	public void createApplicationWithHealthCheckHttpEndpoint() throws IOException {
+		String appName = namespacedAppName("health_check_http_endpoint");
+		Staging staging = Staging.builder().healthCheckType(HealthCheckType.http).healthCheckHttpEndpoint("/health").build();
+		createSpringApplication(appName, staging);
+
+		CloudApplication app = connectedClient.getApplication(appName);
+		assertNotNull(app);
+		assertEquals(CloudApplication.AppState.STOPPED, app.getState());
+
+		assertEquals(HealthCheckType.http, app.getStaging().getHealthCheckType());
+		assertEquals("/health", app.getStaging().getHealthCheckHttpEndpoint());
 	}
 
 	@Test
@@ -2676,6 +2704,10 @@ public class CloudFoundryClientTest {
 
 	private void createSpringApplication(String appName, String stack, Integer healthCheckTimeout) {
 		createTestApp(appName, null, new Staging(null, null, stack, healthCheckTimeout));
+	}
+	
+	private void createSpringApplication(String appName, Staging staging) {
+		createTestApp(appName, null, staging);
 	}
 
 	private void createTestApp(String appName, List<String> serviceNames, Staging staging) {
