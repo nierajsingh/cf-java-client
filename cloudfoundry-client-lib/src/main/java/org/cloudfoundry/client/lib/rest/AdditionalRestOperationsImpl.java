@@ -128,6 +128,27 @@ public class AdditionalRestOperationsImpl implements AdditionalRestOperations {
 	public ApplicationStats getApplicationStats(CloudApplication application) {
 		return doGetApplicationStats(application.getMeta().getGuid(), application.getState());
 	}
+	
+	@Override
+	public List<String> getStacks() {
+		List<String> stacks = new ArrayList<String>();
+		String json = restTemplate.getForObject(getUrl("/v2/stacks"), String.class);
+		if (json != null) {
+			Map<String, Object> resource = JsonUtil.convertJsonToMap(json);
+			if (resource != null) {
+				List<Map<String, Object>> newResources = (List<Map<String, Object>>) resource.get("resources");
+				if (newResources != null) {
+					for (Map<String, Object> res : newResources) {
+						String name = CloudEntityResourceMapper.getEntityAttribute(res, "name", String.class);
+						if (name != null) {
+							stacks.add(name);
+						}
+					}
+				}
+			}
+		}
+		return stacks;
+	}
 
 	//
 	// HELPER METHODS
@@ -168,26 +189,6 @@ public class AdditionalRestOperationsImpl implements AdditionalRestOperations {
 			return foundResource;
 		}
 		return null;
-	}
-
-	protected List<String> getStacks() {
-		List<String> stacks = new ArrayList<String>();
-		String json = restTemplate.getForObject(getUrl("/v2/stacks"), String.class);
-		if (json != null) {
-			Map<String, Object> resource = JsonUtil.convertJsonToMap(json);
-			if (resource != null) {
-				List<Map<String, Object>> newResources = (List<Map<String, Object>>) resource.get("resources");
-				if (newResources != null) {
-					for (Map<String, Object> res : newResources) {
-						String name = CloudEntityResourceMapper.getEntityAttribute(res, "name", String.class);
-						if (name != null) {
-							stacks.add(name);
-						}
-					}
-				}
-			}
-		}
-		return stacks;
 	}
 
 	/*

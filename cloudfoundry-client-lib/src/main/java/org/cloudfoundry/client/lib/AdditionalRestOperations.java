@@ -79,4 +79,10 @@ public interface AdditionalRestOperations {
 	 */
 	CloudApplication getApplicationWithoutInstances(String appName);
 
+	/**
+	 * 
+	 * @return Non-null list of stacks. Empty if none are available.
+	 */
+	List<String> getStacks();
+
 }
