@@ -42,6 +42,7 @@ import javax.websocket.ClientEndpointConfig;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.cloudfoundry.client.lib.AdditionalRestOperations;
 import org.cloudfoundry.client.lib.ApplicationLogListener;
 import org.cloudfoundry.client.lib.ClientHttpResponseCallback;
 import org.cloudfoundry.client.lib.CloudCredentials;
@@ -138,6 +139,8 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 	private CloudEntityResourceMapper resourceMapper = new CloudEntityResourceMapper();
 
 	private RestTemplate restTemplate;
+	
+	private AdditionalRestOperations additionalRestOperations;
 
 	private URL cloudControllerUrl;
 
@@ -163,6 +166,9 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 		initialize(cloudControllerUrl, restTemplate, oauthClient, loggregatorClient, cloudCredentials);
 
 		this.sessionSpace = sessionSpace;
+		
+		// Must create this AFTER session space is set/validated and rest template configured
+		this.additionalRestOperations = new AdditionalRestOperationsImpl(restTemplate, sessionSpace, cloudControllerUrl);
 	}
 
 	public CloudControllerClientImpl(URL cloudControllerUrl, RestTemplate restTemplate,
@@ -176,6 +182,9 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 		initialize(cloudControllerUrl, restTemplate, oauthClient, loggregatorClient, cloudCredentials);
 
 		this.sessionSpace = validateSpaceAndOrg(spaceName, orgName, tempClient);
+		
+		// Must create this AFTER session space is set/validated and rest template configured
+		this.additionalRestOperations = new AdditionalRestOperationsImpl(restTemplate, sessionSpace, cloudControllerUrl);
 	}
 
 	private void initialize(URL cloudControllerUrl, RestTemplate restTemplate, OauthClient oauthClient,
@@ -2722,6 +2731,11 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 		pathVariables.put("space_guid", spaceGuid);
 
 		getRestTemplate().delete(getUrl(path), pathVariables);
+	}
+
+	@Override
+	public AdditionalRestOperations getAdditionalRestOperations() {
+		return this.additionalRestOperations;
 	}
 
 }
