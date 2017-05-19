@@ -164,6 +164,8 @@ public class CloudFoundryClientTest {
 
 	private static final boolean SSO_ENABLED = "true".equalsIgnoreCase(System.getProperty("ccng.sso.enabled", "false").trim());
 	
+	private static final boolean DIEGO = "true".equalsIgnoreCase(System.getProperty("ccng.diego", "false").trim());
+	
 	private static String defaultDomainName = null;
 
 	private static HttpProxyConfiguration httpProxyConfiguration;
@@ -519,7 +521,10 @@ public class CloudFoundryClientTest {
 	}
 	
 	@Test
-	public void createApplicationWithHealthCheckType() throws IOException {
+	public void createApplicationWithHealthCheckTypeProcess() throws IOException {
+		// Enable only for Diego
+		assumeTrue(DIEGO);
+
 		String appName = namespacedAppName("health_check_type");
 		Staging staging = Staging.builder().healthCheckType(HealthCheckType.process).build();
 		createSpringApplication(appName, staging);
@@ -533,6 +538,9 @@ public class CloudFoundryClientTest {
 	
 	@Test
 	public void createApplicationWithHealthCheckHttpEndpoint() throws IOException {
+		// Enable only for Diego
+		assumeTrue(DIEGO);
+
 		String appName = namespacedAppName("health_check_http_endpoint");
 		Staging staging = Staging.builder().healthCheckType(HealthCheckType.http).healthCheckHttpEndpoint("/health").build();
 		createSpringApplication(appName, staging);
